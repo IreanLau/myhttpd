@@ -6,7 +6,7 @@ SER_SRC=httpd.c
 CLI_SRC=demo_client.c
 INCLUDE=.
 CC=gcc
-FLAGS=-o #-D_DEBUG_
+FLAGS= -D_DEBUG_ -D_SELECT_
 LDFLAGS=-lpthread -g#-static
 LIB=
 
@@ -14,9 +14,9 @@ LIB=
 all:$(SER_BIN) $(CLI_BIN) cgi
 
 $(SER_BIN):$(SER_SRC)
-	$(CC) $(FLAGS)  $@ $^ $(LDFLAGS)
+	$(CC) -o  $@ $^ $(LDFLAGS) $(FLAGS)
 $(CLI_BIN):$(CLI_SRC)
-	$(CC) $(FLAGS)  $@ $^ $(LDFLAGS)
+	$(CC) -o  $@ $^ $(LDFLAGS) $(FLAGS)
 
 .PHONY:cgi
 cgi:
