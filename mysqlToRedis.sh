@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MYSQL_DB="redis"
+MYSQL_DB="remote_table"
 FLAG="-N -r"
 SQLSHELL="events_to_redis.sql"
 REDISAUTH="ireanlau"

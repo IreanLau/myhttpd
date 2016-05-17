@@ -22,13 +22,12 @@ class sql_connecter{
 		bool begin_connect();
 		bool close_connect();
 		bool insert_sql(const std::string &data);
-		bool select_sql(string[],string _out_str[][3],int& _out_row);
+		bool select_sql(string[],string _out_str[][5],int& _out_row);
 //		bool updata_sql();
 //		bool delete_sql();
 //		bool delete_table();
 		bool create_table();
 		void connSqlAndShow();
-			
 	private:
 		MYSQL_RES* res;
 		MYSQL* mysql_base;
