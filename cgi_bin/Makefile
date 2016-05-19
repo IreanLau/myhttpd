@@ -1,4 +1,4 @@
-FIND_PATH=-I/home/lau/project/myhttpd/sql_connect -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
+FIND_PATH=-I/home/lau/project/myhttpd/sql_connect -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient -I/usr/include/hiredis -L/usr/lib -lhiredis
 SRC_PATH=/home/lau/project/myhttpd/sql_connect/sql_connect.cpp
 ADD_FLAGS=-ldl -lrt -pthread
 .PHONY:all

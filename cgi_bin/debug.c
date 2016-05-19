@@ -81,7 +81,6 @@ int main()
 		return 1;
 	}
 	
-
 	printf("</body>\n");
 	printf("</html>\n");
 	return 0;

@@ -1,4 +1,5 @@
 #include"httpd.h"
+#include<sys/select.h>
 
 
 static void bad_request(int client)
@@ -29,7 +30,6 @@ void print_debug(const char* msg)
 	printf("%s\n",msg);
 }
 
-
 void echo_error_client(int client,int error_code)
 {
 	switch(error_code)
@@ -55,7 +55,8 @@ void clean_header(int client)
 	char buf[1024];
 	memset(buf,'\0',sizeof(buf));
 	int ret = 0;
-	do{
+	do
+	{
 		ret = get_line(client,buf,sizeof(buf));	
 	}while(ret > 0 && strcmp(buf,"\n")!=0);
 }
@@ -85,7 +86,7 @@ int get_line(int sock,char* buf,int max_len)
 		{//succ
 			if(c == '\r')
 			{
- 	 		 	n= recv(sock,&c,1,MSG_PEEK);//嗅探
+ 	 	 	 	n= recv(sock,&c,1,MSG_PEEK);//嗅探
 				if(n > 0 && c == '\n')
 				{//windows
 					recv(sock,&c,1,0);//delete
@@ -132,7 +133,7 @@ void exe_cgi(int sock_client,const char*path,const char* method,const char* quer
 			if(strncasecmp(buf,"Content-Length:",strlen("Content-Length:")) == 0)
 			{
 				content_length =atoi(&buf[16]);
-				printf("coutent_length%d\n",content_length);
+		 		printf("coutent_length%d\n",content_length);
 			}
 		}while(numchars > 0 && strcmp(buf,"\n") != 0 );
 		if(content_length == -1)
@@ -168,7 +169,6 @@ void exe_cgi(int sock_client,const char*path,const char* method,const char* quer
 		close(cgi_output[0]);
 		close(cgi_output[1]);
 	//	echo_error_client();
-
 		return;
 	}
 	else if(id == 0) //child
@@ -181,7 +181,6 @@ void exe_cgi(int sock_client,const char*path,const char* method,const char* quer
 		memset(env_query,'\0',sizeof(env_query));
 		memset(content_leng_env,'\0',sizeof(content_leng_env));
 		
-
 		close(cgi_input[1]);
 		close(cgi_output[0]);
 
@@ -211,16 +210,12 @@ void exe_cgi(int sock_client,const char*path,const char* method,const char* quer
 		close(cgi_input[0]);
 		close(cgi_output[1]);
 
-	
-
-
 		int i =0;
 		char c='\0';
 		if(strcasecmp("POST",method) == 0)
 		{
 			for(;i<content_length;++i)
 			{
-	
  				recv(sock_client,&c,1,0);
 	 			write(cgi_input[1],&c,1);
 			}
@@ -236,7 +231,6 @@ void exe_cgi(int sock_client,const char*path,const char* method,const char* quer
 	}
 
 }
-
 
 void echo_html(int client,const char*path,unsigned int file_size)
 {
@@ -277,10 +271,6 @@ void *accept_request(void *arg)
 	print_debug("get new line requset\n");
 	pthread_detach(pthread_self());
 
-
-	//echo_error_client(sock_client,400);
-	//return;
-
 	int cgi = 0;
 	char* querry_string=NULL;//参数
 	int sock_client = (int)arg;
@@ -295,16 +285,13 @@ void *accept_request(void *arg)
 	memset(method,'\0',sizeof(method));
 	memset(path,'\0',sizeof(path));
 
-
 	if(get_line(sock_client,buff,sizeof(buff)) < 0 )
 	{
-	//	echo_error_client();
 		return (void*)-1;
 	}
-	//printf("after getline!!!!!!!!!!!!!!!!:>!");
 	print_debug(buff);
-
 	print_debug(path);
+
 	int i=0;
 	int j=0;  //buff line index
 	while(!isspace(buff[j]) && i < sizeof(method)-1 && j < sizeof(buff) )
@@ -313,7 +300,6 @@ void *accept_request(void *arg)
 		i++,j++;
 	}
 
-
 	if(strcasecmp(method,"GET") && strcasecmp(method,"POST"))
 		return NULL;
 	//clean space
@@ -321,7 +307,6 @@ void *accept_request(void *arg)
 	{
 		j++;
 	}
-
 	//get url
 	i=0;
 	while(!isspace(buff[j]) && i < sizeof(url)-1 && j < sizeof(buff) )
@@ -334,8 +319,6 @@ void *accept_request(void *arg)
 	print_debug(url);
 	printf("method: %s\n",method);
 	printf("url: %s\n",url);
-	
-
 	
 	if(strcasecmp(method,"POST") == 0)
 	{
@@ -419,8 +402,6 @@ int start(short port)
 	//端口复用
 	int flag = 1;
 	setsockopt(listen_sock,SOL_SOCKET,SO_REUSEPORT,&flag,sizeof(flag));
-
-
 	
 	struct sockaddr_in local;
 	local.sin_family = AF_INET;
@@ -434,7 +415,6 @@ int start(short port)
 		exit(2);
 	}
 
-
 	if( listen(listen_sock,BACK_LOG) == -1 )
 	{
 		print_log(__FUNCTION__,__LINE__,errno,strerror(errno));
@@ -444,11 +424,11 @@ int start(short port)
 	return listen_sock;
 }
 
-
 //  ./httpd ip[option] port
 int main(int argc,char *argv[])
 {
-	if(argc != 3){
+	if(argc != 3)
+	{
 		usage(argv[0]);
 		exit(1);
 	}
@@ -459,18 +439,40 @@ int main(int argc,char *argv[])
 	struct sockaddr_in client;
 	socklen_t len =0;
 
+
+
+	fd_set accept_set;
+
 	while(1)
 	{
-		int new_sock = accept(sock,(struct sockaddr*)&client,&len);
-		if(new_sock == -1)//failed
-		{
-			print_log(__FUNCTION__,__LINE__,errno,strerror(errno));
-			
-			continue;
-		}
+		int accept_sock = sock;
+	//select
+#ifdef _SELECT_
+		FD_ZERO(&accept_set);
+		FD_SET(accept_sock,&accept_set);
+		struct timeval timeout={5,0};
 
-		pthread_t new_thread;
-		 pthread_create(&new_thread,NULL,accept_request,(void*)new_sock);
+		int select_res = select(accept_sock+1,&accept_set,NULL,NULL,&timeout);
+	
+		if(select_res == -1)
+			perror("select");
+	
+		else if(select_res == 0)
+			printf("No Data within five seconds.\n");
+#endif
+		else 
+		{
+	    	int new_sock = accept(sock,(struct sockaddr*)&client,&len);
+	    	if(new_sock == -1)//failed
+	    	{
+	    		print_log(__FUNCTION__,__LINE__,errno,strerror(errno));
+	    		continue; 
+	    	}
+
+	    	pthread_t new_thread;
+	    	pthread_create(&new_thread,NULL,accept_request,(void*)new_sock);
+
+		}
 	}
 	return 0;
 }
